@@ -99,7 +99,8 @@ const Orientador = sequelize.define('orientador', {
     },
     foto_orientador: {
         type: DataTypes.BLOB('long'),
-        allowNull: true
+        allowNull: true,
+        field: 'foto'
     },
     fecha_inscripcion: {
         type: DataTypes.DATE,
