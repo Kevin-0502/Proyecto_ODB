@@ -14,8 +14,10 @@ const validations = () => {
     return { validate_DUI }
 }
 
-export const isNombreEquipoUnico = async (nombre, excludeId = null) => {
-    const equipo = await Equipo.findOne({ where: { nombre } })
+// Unicidad del nombre acotada a la categoría: el mismo nombre puede repetirse
+// entre categorías distintas, pero no dentro de la misma.
+export const isNombreEquipoUnico = async (nombre, id_categoria, excludeId = null) => {
+    const equipo = await Equipo.findOne({ where: { nombre, id_categoria } })
     if (!equipo) return true
     if (excludeId && equipo.id_equipo === excludeId) return true
     return false

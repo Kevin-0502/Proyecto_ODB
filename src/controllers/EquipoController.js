@@ -59,7 +59,7 @@ export const addEquipo = async (req, res, next) => {
             })
         }
 
-        if (!await isNombreEquipoUnico(nombre)) {
+        if (!await isNombreEquipoUnico(nombre, id_categoria)) {
             return res.status(422).json({
                 message: 'Ya existe un equipo con ese nombre, por favor verifique'
             })
@@ -124,7 +124,7 @@ export const updateEquipo = async (req, res, next) => {
             })
         }
 
-        if (!await isNombreEquipoUnico(nombre, id_equipo)) {
+        if (!await isNombreEquipoUnico(nombre, id_categoria, id_equipo)) {
             return res.status(422).json({
                 message: 'Ya existe un equipo con ese nombre, por favor verifique'
             })
