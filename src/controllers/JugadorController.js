@@ -10,7 +10,7 @@ export const getJugadores = async (req, res, next) => {
     try {
         // Solo los campos necesarios para la tabla y filtros del frontend
         const jugadores = await Jugador.findAll({
-            attributes: ["id_jugador", "nombre1", "nombre2", "apellido1", "apellido2", "fecha_nacimiento", "activo", "id_equipo"],
+            attributes: ["id_jugador", "nombre1", "nombre2", "apellido1", "apellido2", "fecha_nacimiento", "activo", "id_equipo", "foto_actual"],
             include: [
                 {
                     model: Equipo,
@@ -31,9 +31,18 @@ export const getJugadores = async (req, res, next) => {
                 message: "No hay jugadores registrados",
             });
         }
+
+        // Se reemplaza la foto por un estado booleano, nunca se manda el dato de la foto
+        const jugadoresConEstadoFoto = jugadores.map((jugador) => {
+            const data = jugador.toJSON();
+            const tiene_foto = !!data.foto_actual;
+            delete data.foto_actual;
+            return { ...data, tiene_foto };
+        });
+
         return res.status(200).json({
             message: "Jugadores registrados",
-            jugadores,
+            jugadores: jugadoresConEstadoFoto,
         });
     } catch (error) {
         return res.status(500).json({
