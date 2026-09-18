@@ -2,25 +2,25 @@ import Orientador from '../models/Orientador.js'
 import OrientadorEquipo from '../models/OrientadorEquipo.js'
 import Equipo from '../models/Equipo.js'
 import validations from '../utils/validations.js'
+import { literal } from 'sequelize'
 
 const { validate_DUI } = validations()
 
 //getOrientadores modificado para devolver un estado booleano de la foto en vez de la foto
 export const getOrientadores = async (req, res, next) => {
     try {
-        const orientadores = await Orientador.findAll()
-
-        // Se reemplaza la foto por un estado booleano, nunca se manda el dato de la foto
-        const orientadoresConEstadoFoto = orientadores.map((orientador) => {
-            const data = orientador.toJSON()
-            const tiene_foto = !!data.foto_orientador
-            delete data.foto_orientador
-            return { ...data, tiene_foto }
+        const orientadores = await Orientador.findAll({
+            attributes: {
+                exclude: ['foto_orientador'],
+                include: [
+                    [literal("CASE WHEN DATALENGTH(foto) > 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"), 'tiene_foto']
+                ]
+            }
         })
 
         return res.status(200).json({
             message: 'Orientadores registrados',
-            orientadores: orientadoresConEstadoFoto
+            orientadores
         })
     } catch (error) {
         return res.status(500).json({
