@@ -2,18 +2,25 @@ import Orientador from '../models/Orientador.js'
 import OrientadorEquipo from '../models/OrientadorEquipo.js'
 import Equipo from '../models/Equipo.js'
 import validations from '../utils/validations.js'
+import { literal } from 'sequelize'
 
 const { validate_DUI } = validations()
 
-//getOrientadores modificado para excluir la foto
+//getOrientadores modificado para devolver un estado booleano de la foto en vez de la foto
 export const getOrientadores = async (req, res, next) => {
     try {
         const orientadores = await Orientador.findAll({
-            attributes: { exclude: ['foto_orientador'] }
+            attributes: {
+                exclude: ['foto_orientador'],
+                include: [
+                    [literal("CASE WHEN DATALENGTH(foto) > 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"), 'tiene_foto']
+                ]
+            }
         })
+
         return res.status(200).json({
             message: 'Orientadores registrados',
-            orientadores: orientadores
+            orientadores
         })
     } catch (error) {
         return res.status(500).json({

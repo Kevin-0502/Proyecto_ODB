@@ -1,7 +1,7 @@
 import Jugador from "../models/Jugador.js";
 import Equipo from "../models/Equipo.js";
 import Categoria from "../models/Categoria.js";
-import { Op } from "sequelize";
+import { Op, literal } from "sequelize";
 import validations from "../utils/validations.js";
 
 const { validate_DUI } = validations();
@@ -10,7 +10,10 @@ export const getJugadores = async (req, res, next) => {
     try {
         // Solo los campos necesarios para la tabla y filtros del frontend
         const jugadores = await Jugador.findAll({
-            attributes: ["id_jugador", "nombre1", "nombre2", "apellido1", "apellido2", "fecha_nacimiento", "activo", "id_equipo"],
+            attributes: [
+                "id_jugador", "nombre1", "nombre2", "apellido1", "apellido2", "fecha_nacimiento", "activo", "id_equipo",
+                [literal("CASE WHEN DATALENGTH(foto_actual) > 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"), "tiene_foto"],
+            ],
             include: [
                 {
                     model: Equipo,
@@ -31,6 +34,7 @@ export const getJugadores = async (req, res, next) => {
                 message: "No hay jugadores registrados",
             });
         }
+
         return res.status(200).json({
             message: "Jugadores registrados",
             jugadores,
