@@ -1,5 +1,7 @@
 import Equipo from "../models/Equipo.js"
 import Categoria from "../models/Categoria.js"
+import OrientadorEquipo from "../models/OrientadorEquipo.js"
+import Orientador from "../models/Orientador.js"
 import { isNombreEquipoUnico } from "../utils/validations.js"
 
 export const getEquipos = async (req, res, next) => {
@@ -14,10 +16,27 @@ export const getEquipos = async (req, res, next) => {
 
         const equipos = await Equipo.findAll({
             where,
-            include: [{
-                model: Categoria,
-                as: 'categoria'
-            }]
+            include: [
+                {
+                    model: Categoria,
+                    as: 'categoria'
+                },
+                {
+                    // Orientadores asignados al equipo. Solo se piden dui + nombre a propósito:
+                    // NO incluir 'foto_orientador'. Además de inflar el payload (BLOB), el modelo
+                    // mapea foto_orientador -> field:'foto', pero la .bak local tiene la columna
+                    // como 'foto_orientador', así que cualquier query que la traiga rompe local con
+                    // "Invalid column name 'foto'" (falso positivo: en la DB canónica la columna sí
+                    // es 'foto'). Limitando attributes acá el endpoint funciona en ambas.
+                    model: OrientadorEquipo,
+                    as: 'orientadores_asignados',
+                    include: [{
+                        model: Orientador,
+                        as: 'orientador',
+                        attributes: ['dui_orientador', 'nombre_orientador']
+                    }]
+                }
+            ]
         })
         // Lista filtrada vacía es un resultado válido (200 []); el 404 solo aplica sin filtro.
         if (!where && equipos.length === 0) {
