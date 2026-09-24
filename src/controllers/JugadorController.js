@@ -795,3 +795,39 @@ export const setJugadoresActivo = async (req, res, next) => {
         });
     }
 };
+
+// Activa/desactiva todos los jugadores de un equipo
+export const setJugadoresEquipoActivo = async (req, res, next) => {
+    try {
+        const { id_equipo, activo } = req.body;
+
+        if (!id_equipo || typeof activo !== "boolean") {
+            return res.status(400).json({
+                message: "'id_equipo' y 'activo' (booleano) son obligatorios, por favor verifique",
+            });
+        }
+
+        const equipo = await Equipo.findOne({ where: { id_equipo } });
+
+        if (!equipo) {
+            return res.status(404).json({
+                message: "Este equipo no esta registrado, por favor verifique",
+            });
+        }
+
+        const [afectados] = await Jugador.update(
+            { activo: activo },
+            { where: { id_equipo } }
+        );
+
+        return res.status(200).json({
+            message: `${afectados} jugador(es) ${activo ? "activado(s)" : "desactivado(s)"} con exito`,
+            afectados: afectados,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error al cambiar el estado de los jugadores del equipo",
+            error: error.message,
+        });
+    }
+};
