@@ -2,7 +2,7 @@ import Jugador from "../models/Jugador.js";
 import Equipo from "../models/Equipo.js";
 import Categoria from "../models/Categoria.js";
 import { Op, literal } from "sequelize";
-import validations from "../utils/validations.js";
+import validations, { validarAnioNacimiento } from "../utils/validations.js";
 
 const { validate_DUI } = validations();
 
@@ -150,6 +150,18 @@ export const addJugador = async (req, res, next) => {
         if (!equipo) {
             return res.status(404).json({
                 message: "Este equipo no esta registrado, por favor verifique",
+            });
+        }
+
+        // T-B41: validar el año de nacimiento contra la categoría del equipo destino
+        const categoria = await Categoria.findOne({
+            where: { id_categoria: equipo.id_categoria },
+        });
+
+        const validacionEdad = validarAnioNacimiento(fecha_nacimiento, categoria);
+        if (!validacionEdad.valido) {
+            return res.status(400).json({
+                message: validacionEdad.mensaje,
             });
         }
 
@@ -681,40 +693,16 @@ export const ChangeJugadorEquipo = async (req, res, next) => {
             });
         }
 
-        // Obtener la categoría del equipo destino para validar la edad
+        // T-B41: obtener la categoría del equipo destino y validar por año de nacimiento
         const categoria = await Categoria.findOne({
             where: { id_categoria: equipo.id_categoria },
         });
 
-        if (categoria && categoria.edadmin != null && categoria.edadmax != null) {
-            const fechaNacimiento = new Date(jugador.fecha_nacimiento);
-            const fechaActual = new Date();
-            let edadJugador =
-                fechaActual.getFullYear() - fechaNacimiento.getFullYear();
-
-            const mesActual = fechaActual.getMonth();
-            const diaActual = fechaActual.getDate();
-            const mesNacimiento = fechaNacimiento.getMonth();
-            const diaNacimiento = fechaNacimiento.getDate();
-
-            if (
-                mesActual < mesNacimiento ||
-                (mesActual === mesNacimiento && diaActual < diaNacimiento)
-            ) {
-                edadJugador--;
-            }
-
-            if (edadJugador > categoria.edadmax) {
-                return res.status(400).json({
-                    message: `Este jugador tiene ${edadJugador} años y sobrepasa la edad máxima (${categoria.edadmax}) de esta categoría`,
-                });
-            }
-
-            if (edadJugador < categoria.edadmin) {
-                return res.status(400).json({
-                    message: `Este jugador tiene ${edadJugador} años y no cumple la edad mínima (${categoria.edadmin}) de esta categoría`,
-                });
-            }
+        const validacionEdad = validarAnioNacimiento(jugador.fecha_nacimiento, categoria);
+        if (!validacionEdad.valido) {
+            return res.status(400).json({
+                message: validacionEdad.mensaje,
+            });
         }
 
         await jugador.update({
