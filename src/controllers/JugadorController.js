@@ -6,10 +6,19 @@ import validations, { validarAnioNacimiento } from "../utils/validations.js";
 
 const { validate_DUI } = validations();
 
+// T-B40: filtro opcional ?tienenFoto=true|false sobre la columna foto_actual
+const fotoWhere = (tienenFoto) => {
+    if (tienenFoto === "true") return literal("DATALENGTH(foto_actual) > 0");
+    if (tienenFoto === "false") return literal("(foto_actual IS NULL OR DATALENGTH(foto_actual) = 0)");
+    return null;
+};
+
 export const getJugadores = async (req, res, next) => {
     try {
         // Solo los campos necesarios para la tabla y filtros del frontend
+        const fotoCond = fotoWhere(req.query.tienenFoto);
         const jugadores = await Jugador.findAll({
+            ...(fotoCond ? { where: { [Op.and]: [fotoCond] } } : {}),
             attributes: [
                 "id_jugador", "nombre1", "nombre2", "apellido1", "apellido2", "fecha_nacimiento", "activo", "id_equipo",
                 [literal("CASE WHEN DATALENGTH(foto_actual) > 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"), "tiene_foto"],
@@ -540,6 +549,8 @@ export const JugadorByEquipo = async (req, res, next) => {
 
         const where = { id_equipo };
         if (id_jugador) where.id_jugador = id_jugador;
+        const fotoCond = fotoWhere(req.query.tienenFoto);
+        if (fotoCond) where[Op.and] = [fotoCond];
 
         const jugadores = await Jugador.findAll({ where });
 
@@ -580,6 +591,8 @@ export const JugadorByCategoria = async (req, res, next) => {
 
         const where = { id_equipo: equipo.id_equipo };
         if (id_jugador) where.id_jugador = id_jugador;
+        const fotoCond = fotoWhere(req.query.tienenFoto);
+        if (fotoCond) where[Op.and] = [fotoCond];
 
         const jugadores = await Jugador.findAll({ where });
 
