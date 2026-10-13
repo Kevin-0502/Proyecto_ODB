@@ -1,6 +1,8 @@
 import Orientador from '../models/Orientador.js'
 import OrientadorEquipo from '../models/OrientadorEquipo.js'
 import Equipo from '../models/Equipo.js'
+import InfraccionesOrientador from '../models/InfraccionesOrientador.js'
+import sequelize from '../database/DB_connection.js'
 import validations from '../utils/validations.js'
 import { literal } from 'sequelize'
 
@@ -209,6 +211,7 @@ export const deleteOrientador = async (req, res, next) => {
         }
 
         const orientador = await Orientador.findOne({
+            attributes: ['dui_orientador'],
             where: {
                 dui_orientador: dui_orientador
             }
@@ -220,9 +223,24 @@ export const deleteOrientador = async (req, res, next) => {
             })
         }
 
-        await orientador.destroy()
+        // Las infracciones son historial disciplinario: no se eliminan junto con el orientador
+        const infracciones = await InfraccionesOrientador.count({ where: { dui_orientador } })
+        if (infracciones > 0) {
+            return res.status(409).json({
+                message: 'No se puede eliminar el orientador porque tiene infracciones registradas'
+            })
+        }
+
+        // Se eliminan las asignaciones a equipos (tabla intermedia) y el orientador en una sola transacción
+        const asignaciones_eliminadas = await sequelize.transaction(async (t) => {
+            const eliminadas = await OrientadorEquipo.destroy({ where: { dui_orientador }, transaction: t })
+            await orientador.destroy({ transaction: t })
+            return eliminadas
+        })
+
         return res.status(200).json({
-            message: 'Orientador eliminado con exito'
+            message: 'Orientador eliminado con exito',
+            asignaciones_eliminadas
         })
     } catch (error) {
         return res.status(500).json({
