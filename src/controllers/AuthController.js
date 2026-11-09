@@ -88,7 +88,7 @@ export const loginOrientador = async (req, res) => {
         }));
 
         const user = {
-            username: nombreEquipo,
+            username: asignaciones[0].equipo.nombre,
             rol: 'orientador',
             dui_orientador: orientador.dui_orientador,
             nombre_orientador: orientador.nombre_orientador?.trim(),
@@ -99,10 +99,7 @@ export const loginOrientador = async (req, res) => {
 
         return res.json({ success: true, token, user });
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Error al iniciar sesión',
-            error: error.message
-        });
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Error al iniciar sesión' });
     }
 };
