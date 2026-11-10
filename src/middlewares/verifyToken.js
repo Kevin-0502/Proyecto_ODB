@@ -13,6 +13,9 @@ const verifyToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.rol === 'orientador') {
+            return res.status(403).json({ message: 'Sin permiso.' });
+        }
         req.user = decoded;
         next();
     } catch (err) {
