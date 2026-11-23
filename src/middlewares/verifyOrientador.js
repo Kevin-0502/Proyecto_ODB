@@ -1,12 +1,13 @@
 import jwt from 'jsonwebtoken';
 import OrientadorEquipo from '../models/OrientadorEquipo.js';
 import Equipo from '../models/Equipo.js';
+import Orientador from '../models/Orientador.js';
 
 // T-B44: protege las rutas /api/orientador/...
 // 1. Token firmado con JWT_SECRET_ORIENTADOR (un token de admin no pasa -> 401).
 // 2. Rol 'orientador' (403 si no).
-// 3. Los equipos se consultan en la BD en cada request (no se confía en los del token),
-//    así un cambio de asignaciones aplica de inmediato.
+// 3. Los equipos y el nombre se consultan en la BD en cada request (del token solo se usan
+//    el DUI y el rol), así un cambio de asignaciones aplica de inmediato.
 const verifyOrientador = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
 
@@ -34,12 +35,19 @@ const verifyOrientador = async (req, res, next) => {
     try {
         const asignaciones = await OrientadorEquipo.findAll({
             where: { dui_orientador: decoded.dui_orientador },
-            include: [{
-                model: Equipo,
-                as: 'equipo',
-                where: { activo: true },
-                attributes: ['id_equipo', 'nombre', 'id_categoria']
-            }]
+            include: [
+                {
+                    model: Equipo,
+                    as: 'equipo',
+                    where: { activo: true },
+                    attributes: ['id_equipo', 'nombre', 'id_categoria']
+                },
+                {
+                    model: Orientador,
+                    as: 'orientador',
+                    attributes: ['nombre_orientador']
+                }
+            ]
         });
 
         // Sin equipos activos asignados: la sesión ya no es válida (el FE hace logout con 401)
@@ -50,7 +58,7 @@ const verifyOrientador = async (req, res, next) => {
         req.user = {
             rol: 'orientador',
             dui_orientador: decoded.dui_orientador,
-            nombre_orientador: decoded.nombre_orientador,
+            nombre_orientador: asignaciones[0].orientador?.nombre_orientador?.trim(),
             equipos: asignaciones.map(a => ({
                 id_equipo: a.equipo.id_equipo,
                 nombre: a.equipo.nombre,
