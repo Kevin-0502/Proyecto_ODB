@@ -30,6 +30,12 @@ DB_test();
 //settings
 const port = process.env.PORT || 3002;
 
+// Detras de un proxy (nginx, Docker, etc.) poner TRUST_PROXY=1 en el .env,
+// para que el limite de intentos use la IP real del cliente y no la del proxy.
+if (process.env.TRUST_PROXY) {
+    app.set('trust proxy', Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+}
+
 //middlewares
 app.use(compression());
 app.use(morgan('dev'));
