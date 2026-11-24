@@ -7,8 +7,21 @@ import sequelize from './database/DB_connection.js'
 import dotenv from 'dotenv'
 import StartRelations from './models/Relaciones.js';
 import routes from './routes/index.js';
+import orientadorRoutes from './routes/orientador.routes.js';
+import verifyOrientador from './middlewares/verifyOrientador.js';
 const app = express();
 dotenv.config()
+
+// T-B44: el token de orientador se firma con su propio secreto (obligatorio).
+// Sin respaldo a JWT_SECRET: si falta o es igual, el BE no arranca.
+if (!process.env.JWT_SECRET_ORIENTADOR) {
+    console.error('❌ Falta JWT_SECRET_ORIENTADOR en el .env');
+    process.exit(1);
+}
+if (process.env.JWT_SECRET_ORIENTADOR === process.env.JWT_SECRET) {
+    console.error('❌ JWT_SECRET_ORIENTADOR no puede ser igual a JWT_SECRET');
+    process.exit(1);
+}
 
 StartRelations()
 
@@ -52,6 +65,9 @@ app.use(cors({
 
 //routes
 app.use(routes);
+
+// T-B44: rutas del rol orientador (router separado, antes del 404)
+app.use('/api/orientador', verifyOrientador, orientadorRoutes);
 
 // 404 — ruta no encontrada
 app.use((req, res) => {

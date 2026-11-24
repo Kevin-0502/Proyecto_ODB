@@ -33,7 +33,7 @@ export const login = (req, res) => {
     });
 };
 
-// Login de orientadores (T-B2.1)
+// Login de orientadores (T-B42.1)
 // usuario: nombre del equipo | contraseña: DUI del orientador
 // Devuelve token si el orientador está asignado a un equipo con ese nombre (cualquier rol).
 export const loginOrientador = async (req, res) => {
@@ -95,7 +95,8 @@ export const loginOrientador = async (req, res) => {
             equipos
         };
 
-        const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '8h' });
+        // T-B44: firmado con su propio secreto; no sirve en las rutas de admin.
+        const token = jwt.sign(user, process.env.JWT_SECRET_ORIENTADOR, { expiresIn: '8h' });
 
         return res.json({ success: true, token, user });
     } catch (error) {
