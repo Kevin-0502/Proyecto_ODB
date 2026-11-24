@@ -30,6 +30,16 @@ DB_test();
 //settings
 const port = process.env.PORT || 3002;
 
+// Detras de un proxy (nginx, Docker, etc.) poner TRUST_PROXY=<n.º de proxies> en el .env (ej. 1)
+if (process.env.TRUST_PROXY) {
+    const saltos = Number(process.env.TRUST_PROXY);
+    if (Number.isInteger(saltos) && saltos >= 0) {
+        app.set('trust proxy', saltos);
+    } else {
+        console.warn('⚠️ TRUST_PROXY debe ser un número (ej. 1); se ignora:', process.env.TRUST_PROXY);
+    }
+}
+
 //middlewares
 app.use(compression());
 app.use(morgan('dev'));

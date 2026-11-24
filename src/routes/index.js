@@ -61,12 +61,13 @@ import {
     suspensiones_orientadores
 } from '../controllers/JornadaController.js';
 import verifyToken from '../middlewares/verifyToken.js';
+import limiteLoginOrientador from '../middlewares/limiteLoginOrientador.js';
 import { login, loginOrientador } from '../controllers/AuthController.js';
 
 //routes
 //endpoint de autenticación (sin Api_key)
 router.post('/api/login', login);
-router.post('/api/login_orientador', loginOrientador);
+router.post('/api/login_orientador', limiteLoginOrientador, loginOrientador);
 
 //endpoint for test
 router.get('/api/test', (req, res) => {

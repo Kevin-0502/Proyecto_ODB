@@ -13,7 +13,8 @@ const verifyToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (decoded.rol === 'orientador') {
+        // T-B43: denegar por defecto, solo admin entra a estas rutas
+        if (decoded.rol !== 'admin') {
             return res.status(403).json({ message: 'Sin permiso.' });
         }
         req.user = decoded;
